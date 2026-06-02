@@ -1,6 +1,10 @@
 const JOURNEY_BASE = "https://www.journeys.nzta.govt.nz";
 const DATA_URL = `${JOURNEY_BASE}/assets/map-data-cache/delays.json`;
 const BRIDGE_KEYWORDS = ["harbour bridge", "auckland harbour bridge"];
+const BRIDGE_BOUNDS = {
+  minLat: -36.855, maxLat: -36.825,
+  minLon: 174.733, maxLon: 174.755,
+};
 const ALERT_TYPES = new Set(["closures", "hazards", "warnings"]);
 const THIRTY_ONE_MINUTES_MS = 31 * 60 * 1000;
 
@@ -16,6 +20,19 @@ export interface BridgeEvent {
   endNice: string | null;
   expectedResolution: string | null;
   sourceUrl: string;
+}
+
+function matchesBridge(feature: { geometry?: { coordinates?: number[] } | null; properties?: { LocationArea?: string } }): boolean {
+  const coords = feature.geometry?.coordinates;
+  if (coords) {
+    const [lng, lat] = coords;
+    return (
+      lat >= BRIDGE_BOUNDS.minLat && lat <= BRIDGE_BOUNDS.maxLat &&
+      lng >= BRIDGE_BOUNDS.minLon && lng <= BRIDGE_BOUNDS.maxLon
+    );
+  }
+  const location = (feature.properties?.LocationArea ?? "").toLowerCase();
+  return BRIDGE_KEYWORDS.some((k) => location.includes(k));
 }
 
 export async function fetchBridgeEvents(): Promise<BridgeEvent[]> {
@@ -34,8 +51,7 @@ export async function fetchBridgeEvents(): Promise<BridgeEvent[]> {
   const events: BridgeEvent[] = [];
   for (const feature of payload.features ?? []) {
     const props = feature.properties ?? {};
-    const location: string = (props.LocationArea ?? "").toLowerCase();
-    if (!BRIDGE_KEYWORDS.some((k) => location.includes(k))) continue;
+    if (!matchesBridge(feature)) continue;
     if (!ALERT_TYPES.has(props.type)) continue;
 
     events.push({

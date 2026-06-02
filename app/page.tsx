@@ -1,66 +1,47 @@
-import Image from "next/image";
+import { fetchBridgeEvents } from "@/lib/harbour-bridge";
 import styles from "./page.module.css";
 
-export default function Home() {
+export const revalidate = 1800;
+
+export default async function Home() {
+  const events = await fetchBridgeEvents();
+  const disrupted = events.length > 0;
+  const checkedAt = new Date().toLocaleString("en-NZ", { timeZone: "Pacific/Auckland" });
+
   return (
-    <div className={styles.page}>
-      <main className={styles.main}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className={styles.intro}>
-          <h1>To get started, edit the page.tsx file.</h1>
-          <p>
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className={styles.ctas}>
-          <a
-            className={styles.primary}
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className={styles.logo}
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className={styles.secondary}
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+    <main className={styles.main}>
+      <h1 className={styles.heading}>Auckland Harbour Bridge</h1>
+
+      <div className={disrupted ? styles.disrupted : styles.clear}>
+        {disrupted ? "⚠ DISRUPTED" : "✓ CLEAR"}
+      </div>
+
+      {disrupted && (
+        <ul className={styles.events}>
+          {events.map((e, i) => (
+            <li key={i} className={styles.event}>
+              <span className={styles.badge}>{e.category}</span>
+              <strong>{e.impact || e.eventType || e.category}</strong>
+              {e.description && <p>{e.description}</p>}
+              {e.startNice && <small>Started: {e.startNice}</small>}
+              {e.expectedResolution && (
+                <small> · Expected clear: {e.expectedResolution}</small>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {!disrupted && (
+        <p className={styles.sub}>No active closures or incidents.</p>
+      )}
+
+      <footer className={styles.footer}>
+        Checked: {checkedAt} NZT ·{" "}
+        <a href="https://www.journeys.nzta.govt.nz/highway-conditions/traffic-and-travel-list-view">
+          NZTA source
+        </a>
+      </footer>
+    </main>
   );
 }

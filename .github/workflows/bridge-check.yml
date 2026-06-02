@@ -1,0 +1,16 @@
+name: Harbour Bridge Monitor
+
+on:
+  schedule:
+    - cron: '*/30 * * * *'
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check Harbour Bridge
+        run: |
+          curl -sf https://harbour-bridge-monitor.vercel.app/api/traffic \
+            -H "Accept: application/json" \
+            --max-time 30

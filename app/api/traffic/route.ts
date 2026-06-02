@@ -1,14 +1,17 @@
 import { fetchBridgeEvents, isNew } from "@/lib/harbour-bridge";
+import { fetchWind } from "@/lib/wind";
+import { computeRisk } from "@/lib/risk";
 import { postDiscordAlert } from "@/lib/discord";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
-  const events = await fetchBridgeEvents();
+  const [events, wind] = await Promise.all([fetchBridgeEvents(), fetchWind()]);
   const newEvents = events.filter(isNew);
 
   if (newEvents.length > 0) {
-    await postDiscordAlert(newEvents);
+    const risk = computeRisk(wind?.gust ?? null);
+    await postDiscordAlert(newEvents, wind ?? undefined, risk);
   }
 
   return Response.json({

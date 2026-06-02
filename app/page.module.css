@@ -10,7 +10,7 @@
   color: #e8edf5;
   font-family: var(--font-mono), 'Courier New', monospace;
   position: relative;
-  overflow: hidden;
+  overflow-x: hidden;
 }
 
 /* Atmospheric radial glow layers */
@@ -230,6 +230,20 @@
   color: rgba(232, 237, 245, 0.32);
 }
 
+/* ── Data grid (WindCard + LaneCard) ── */
+.dataGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  width: 100%;
+  max-width: 560px;
+  animation: riseIn 0.9s 0.2s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@media (max-width: 600px) {
+  .dataGrid { grid-template-columns: 1fr; }
+}
+
 /* ── Event cards ── */
 .events {
   width: 100%;
@@ -323,4 +337,13 @@
   .titleOutline { -webkit-text-stroke-width: 1px; }
   .orb { width: 100px; height: 100px; }
   .orbCore { width: 58px; height: 58px; }
+}
+
+@media (max-height: 700px) {
+  .main { gap: 20px; padding: 16px 0 24px; }
+}
+
+@media (max-width: 600px) and (max-height: 700px) {
+  .main { gap: 12px; padding: 10px 0 14px; }
+  .title { font-size: clamp(2.5rem, 7vw, 5rem); }
 }

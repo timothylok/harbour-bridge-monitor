@@ -1,10 +1,16 @@
 import { fetchBridgeEvents } from "@/lib/harbour-bridge";
+import { fetchWind } from "@/lib/wind";
+import { computeRisk } from "@/lib/risk";
+import WindCard from "./components/WindCard";
+import LaneCard from "./components/LaneCard";
+import RiskBadge from "./components/RiskBadge";
 import styles from "./page.module.css";
 
-export const revalidate = 1800;
+export const revalidate = 60;
 
 export default async function Home() {
-  const events = await fetchBridgeEvents();
+  const [events, wind] = await Promise.all([fetchBridgeEvents(), fetchWind()]);
+  const risk = computeRisk(wind?.gust ?? null);
   const disrupted = events.length > 0;
 
   const now = new Date();
@@ -40,22 +46,11 @@ export default async function Home() {
           </h1>
         </div>
 
-        <div className={styles.statusBlock}>
-          <div className={`${styles.orb} ${disrupted ? styles.orbDisrupted : styles.orbClear}`}>
-            <div className={styles.orbCore} />
-            <div className={styles.orbRing} />
-          </div>
+        <RiskBadge level={risk.level} reason={risk.reason} />
 
-          <div className={styles.statusReadout}>
-            <div className={`${styles.statusWord} ${disrupted ? styles.statusWordDisrupted : styles.statusWordClear}`}>
-              {disrupted ? "DISRUPTED" : "CLEAR"}
-            </div>
-            <div className={styles.statusDetail}>
-              {disrupted
-                ? `${events.length} active event${events.length > 1 ? "s" : ""} detected`
-                : "No active closures or incidents"}
-            </div>
-          </div>
+        <div className={styles.dataGrid}>
+          <WindCard wind={wind} />
+          <LaneCard events={events} />
         </div>
 
         {disrupted && (

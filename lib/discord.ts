@@ -1,8 +1,21 @@
 import type { BridgeEvent } from "./harbour-bridge";
+import type { WindData } from "./wind";
+import type { RiskAssessment } from "./risk";
 
-export async function postDiscordAlert(events: BridgeEvent[]): Promise<void> {
+export async function postDiscordAlert(
+  events: BridgeEvent[],
+  wind?: WindData,
+  risk?: RiskAssessment,
+): Promise<void> {
   const webhook = process.env.DISCORD_WEBHOOK_URL;
   if (!webhook) throw new Error("DISCORD_WEBHOOK_URL is not set");
+
+  const windField = wind
+    ? { name: "Wind", value: `${wind.speed} km/h · Gust ${wind.gust} km/h · ${wind.direction}`, inline: true }
+    : null;
+  const riskField = risk
+    ? { name: "Wind Risk", value: risk.level.toUpperCase(), inline: true }
+    : null;
 
   const embeds = events.map((e) => ({
     title: `Auckland Harbour Bridge — ${e.category === "closure" ? "CLOSED" : "INCIDENT"}`,
@@ -13,6 +26,8 @@ export async function postDiscordAlert(events: BridgeEvent[]): Promise<void> {
       e.startNice ? { name: "Started", value: e.startNice, inline: true } : null,
       e.endNice ? { name: "Expected end", value: e.endNice, inline: true } : null,
       e.expectedResolution ? { name: "Expected clear", value: e.expectedResolution, inline: true } : null,
+      windField,
+      riskField,
       e.description ? { name: "Details", value: e.description.slice(0, 1024) } : null,
     ].filter(Boolean),
     url: e.sourceUrl,

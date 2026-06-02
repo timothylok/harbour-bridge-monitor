@@ -4,6 +4,11 @@ on:
   schedule:
     - cron: '*/30 * * * *'
   workflow_dispatch:
+    inputs:
+      debug:
+        description: 'Print response body'
+        required: false
+        default: 'false'
 
 jobs:
   check:
